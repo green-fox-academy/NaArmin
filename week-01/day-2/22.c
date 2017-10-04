@@ -13,16 +13,13 @@ int main() {
 	// set out to 0b010
 	// otherwise set out to 0b001
 	if (ac % 4 == 0) {
-            if (time <= 200) {
-                    out = 0b100;
-                }
-            else {
-                    out = 0b010;
-                }
-            }
+        if (time <= 200)
+           out = 0b100;
+        else
+           out = 0b010;
+    }
     else {
         out = 0b001;
     }
-    printf("%d", out);
 	return 0;
     }

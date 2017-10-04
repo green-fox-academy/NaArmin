@@ -8,7 +8,7 @@ to keep it simple we say every year is 365 days long, every month is 30 days
 
 int main()
 {
-    int days = 243;
+    int days = 3243;
 
     int year = days / 365;
     int month = (days - 365 * year) / 30;
