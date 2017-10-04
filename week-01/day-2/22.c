@@ -4,7 +4,7 @@
 int main() {
 
 	uint8_t ac = 8;
-	uint8_t time = 1920;
+	uint8_t time = 120;
 	uint8_t out;
 	// if ac is dividable by 4
 	// and time is not more than 200
