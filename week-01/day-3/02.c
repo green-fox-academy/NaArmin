@@ -9,7 +9,7 @@ int main()
 {
     int a = 212;
     int b = abs(a);
-    for (int i = 1; i <= b; i++) // with cycle, yeah!
+    for (int i = 1; i <= b; i++) // done with cycle, yeah!
         a++;
     if (a == 0)
         printf("Negative or 0.");

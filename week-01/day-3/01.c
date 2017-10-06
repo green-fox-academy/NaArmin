@@ -7,9 +7,9 @@ use correct variables for each
 */
 
 int main() {
-    uint8_t age = 33;
+    int age = 33;
     float height = 1.77;
 
-    printf("Magassag: %.2f\n", height);
+    printf("Magassag: %.2fm, eletkor: %d.\n", height, age);
 	return 0;
 }
