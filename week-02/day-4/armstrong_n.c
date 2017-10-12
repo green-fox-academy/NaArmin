@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <math.h>
+#include <tgmath.h>
 
 int main()
 {
@@ -16,18 +16,14 @@ int main()
         tmp /= 10;
     }
     printf("The %d is ", num);
-    tmp = num;
-    for (int i = digit - 1; i >= 0; i--) {
-
-        tmp = num / (int)pow(10, i);
+  //  tmp = num;
+    for (int i = digit; i > 0; i--) {
+        tmp = num / pow(10, (i - 1));
         sum += pow(tmp, digit);
-
         printf("%d , ", num);
-        num -= tmp * pow(10, i);
-
+        num = num - tmp * pow(10, (i - 1)); //this is the problematic line
     }
         printf("s%d", sum);
-
     return 0;
 }
 
