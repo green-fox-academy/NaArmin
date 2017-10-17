@@ -8,14 +8,13 @@ unsigned int ret_485(void);
 
 int main()
 {
-    int number = (unsigned long) ret_485();
+    int number = (unsigned char) ret_485();
 
 	printf("%d", number);
     return 0;
 }
 unsigned int ret_485(void)
 {
-    unsigned int r = 485;
-    return r;
+    return 485;
 }
 
