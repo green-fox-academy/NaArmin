@@ -8,7 +8,7 @@ main()
 
 	//TODO: print out the f/i quotient
 	result = f / i;
-        printf("%f\n", result);
+    printf("%f\n", result);
 	//QUESTION: do you need explicit conversion? -NO.
 
 
