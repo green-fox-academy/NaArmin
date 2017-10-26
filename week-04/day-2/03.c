@@ -19,19 +19,22 @@ int main()
 {
     int px;
     int py;
-    point_t *point1;
-    point_t *point2;
+    point_t point1, point2;
+    point_t *pptr1, *pptr2;
+
+    pptr1 = &point1;
+    pptr2 = &point2;
     printf("please enter point 1 x: ");
     scanf("%d", &px);
     printf("please enter point 1 y: ");
     scanf("%d", &py);
-    createpoint(px, py, &point1);
+    createpoint(px, py, pptr1);
     printf("please enter point 2 x: ");
     scanf("%d", &px);
     printf("please enter point 2 y: ");
     scanf("%d", &py);
-    createpoint(px, py, &point2);
-    printf("\nDistance of the points is %.2f.", distancepoints(&point1, &point2));
+    createpoint(px, py, pptr2);
+    printf("\nDistance of the points is %.2f.", distancepoints(pptr1, pptr2));
     return 0;
 }
 void createpoint(int x, int y, point_t *p)
@@ -42,7 +45,6 @@ void createpoint(int x, int y, point_t *p)
 float distancepoints(point_t *a, point_t *b)
 {
     double dx = a->x - b->x;
-    double dy = a->y - b->y; printf("...%d...%d...%d...%d", a->x, a->y, b->x, b->y);
+    double dy = a->y - b->y;
     return sqrt((dx * dx) + (dy * dy));
 }
-
