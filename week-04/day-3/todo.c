@@ -99,14 +99,14 @@ void loadfile()
         return;
     }
     tasknum = 0;
-    while (fp != NULL) {
+    while (fp != NULL && tasknum < 10) {  // tasknum check for avoiding endless loop when something goes wrong
         tasknum++;
-        if (!fgets(line_fromfile, 69, fp)) {
+        if (!fgets(line_fromfile, 70, fp)) {
             tasknum--;
             break;
         }
-        strcpy(&list[tasknum - 1].text, strtok(line_fromfile, '\n'));
-    }
+        strncpy(&list[tasknum - 1].text, line_fromfile, strlen(line_fromfile) - 1); // cutting the extra newline
+        }
     fclose(fp);
     printf("%d task(s) read.\n", tasknum);
 }
@@ -114,9 +114,10 @@ void savefile()
 {
     FILE *fp;
     fp = fopen("todos", "w");
-    for (int i = 0; i < tasknum; i++)
+    for (int i = 0; i < tasknum; i++) {
         fputs(&list[i].text, fp);
         fputc('\n', fp);
+        }
     fclose(fp);
 }
 void help()
