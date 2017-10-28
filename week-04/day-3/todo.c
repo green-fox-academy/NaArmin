@@ -13,6 +13,8 @@ void addtask(char *descript);
 void listtasks();
 void emptytasks();
 void deltask(char *index);
+void savefile();
+void loadfile();
 
 int main()
 {
@@ -36,6 +38,12 @@ int main()
             emptytasks();
         if (strcmp(command, "-rm") == 0)
             deltask(param);
+        if (strcmp(command, "-rd") == 0)
+            loadfile();
+        if (strcmp(command, "-wr") == 0) {
+            savefile();
+            puts("File saved.");
+        }
     }
     return 0;
 }
@@ -80,6 +88,36 @@ void deltask(char *index)
             list[i] = list[i +  1];
         tasknum--;
         }
+}
+void loadfile()
+{
+    char line_fromfile[70];
+    FILE *fp;
+    fp = fopen("todos", "r");
+    if (fp == NULL) {
+        puts("File of todo does not exist!");
+        return;
+    }
+    tasknum = 0;
+    while (fp != NULL) {
+        tasknum++;
+        if (!fgets(line_fromfile, 69, fp)) {
+            tasknum--;
+            break;
+        }
+        strcpy(&list[tasknum - 1].text, strtok(line_fromfile, '\n'));
+    }
+    fclose(fp);
+    printf("%d task(s) read.\n", tasknum);
+}
+void savefile()
+{
+    FILE *fp;
+    fp = fopen("todos", "w");
+    for (int i = 0; i < tasknum; i++)
+        fputs(&list[i].text, fp);
+        fputc('\n', fp);
+    fclose(fp);
 }
 void help()
 {
