@@ -1,9 +1,11 @@
 #include <iostream>
+#include "Car.h"
 
 using namespace std;
 
 int main()
 {
-    cout << "Hello world!" << endl;
+    Car ca("Wartburg", 123321);
+    ca.run(11);
     return 0;
 }
