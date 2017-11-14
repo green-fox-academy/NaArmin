@@ -11,6 +11,9 @@ class Student {
       this->age = age;
       this->name = name;
     }
+    ~Student() {
+        cout << "Student instance removed.";
+    }
 };
 
 int main() {

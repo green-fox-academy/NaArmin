@@ -19,6 +19,9 @@ class House {
     unsigned int get_price() {
       return this->price;
     }
+    ~House() {
+        cout << endl << "Instance of House removed";
+    }
 };
 
 int main() {

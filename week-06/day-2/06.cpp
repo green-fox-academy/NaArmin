@@ -14,6 +14,9 @@ public:
     void run(unsigned int km){
         this->km += km;
     }
+    ~Car() {
+        cout << endl << "1 instance of Car removed.";
+    }
 };
 int main() {
     // Create a class called "Car"

@@ -15,6 +15,9 @@ class Pirate {
         else
             return "Nothin'";
     }
+    ~Pirate() {
+        cout << endl << "1 Pirate has disappeared.";
+    }
 };
 int main() {
     // create a pirate class

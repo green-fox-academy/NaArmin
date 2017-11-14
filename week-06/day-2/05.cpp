@@ -15,6 +15,9 @@ class Circle {
     float get_area() {
         return radius * radius * 3.14159;
     }
+    ~Circle() {
+        cout << "Circle instance removed.";
+    }
 };
 int main() {
     // Create a `Circle` class that takes it's radius as cinstructor parameter

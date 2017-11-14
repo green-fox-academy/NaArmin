@@ -14,11 +14,14 @@ class Student {
     string greet() {
         return "Hello my name is " + name;
     }
+    ~Student() {
+        cout << "Student instance removed.";
+    }
 };
 
 int main() {
   // Create a method on the Student class called "greet" that returns a string
-  // like: "Hello my name is: <student name>"    
+  // like: "Hello my name is: <student name>"
   return 0;
 }
 

@@ -13,6 +13,7 @@
 *.app/  
 *.pyc  
 *.log  
+*.exe
 
 #################  
 ## Code::Blocks  
@@ -20,6 +21,7 @@
 
 *.depend  
 *.layout  
+*.cbp
 
 ############  
 ## Windows  
