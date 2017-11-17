@@ -13,6 +13,9 @@ Task::Task(string descript, int prio)
     this->prio = prio;
     this->done = false;
 }
+string Task::getname() {
+    return descript;
+}
 Task::~Task()
 {
     cout << "  task deconstructed  ";

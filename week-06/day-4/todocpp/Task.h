@@ -15,9 +15,8 @@ class Task
         void setdone();
         int getprio();
         bool getdone();
+        string getname();
         ~Task();
-
-    protected:
 
     private:
         string descript;

@@ -11,7 +11,7 @@ class TasksList
 {
     public:
         TasksList();
-        void addtask();
+        void addtask(string usrcommand);
         void listtasks();
         void emptylist();
         void remtask();
@@ -21,8 +21,6 @@ class TasksList
         void addprio();
         void listprio();
         ~TasksList();
-
-    protected:
 
     private:
         vector<Task> tlist;

@@ -17,7 +17,13 @@ int main()
             switch (usercmd[1]) {
             case 'a':
                 if (usercmd[2] == ' ')
-                    cout << "addt\n";
+                    todolst.addtask(usercmd);
+                else
+                    cout << "Misspelled command!" << endl;
+                break;
+            case 'l':
+                if (usercmd[2] == ' ')
+                    todolst.listtasks();
                 else
                     cout << "Misspelled command!" << endl;
                 break;
