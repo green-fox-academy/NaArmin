@@ -5,11 +5,41 @@
 using namespace std;
 
 void showcmds();
-int commandparse(string);
 
 int main()
 {
+    string usercmd;
+    TasksList todolst;
     showcmds();
+    while (true) {
+        getline(cin, usercmd);
+        if (usercmd[0] == '-') {
+            switch (usercmd[1]) {
+            case 'a':
+                if (usercmd[2] == ' ')
+                    cout << "addt\n";
+                else
+                    cout << "Misspelled command!" << endl;
+                break;
+            case 'w':
+                if (usercmd[2] == 'r')
+                    cout << "write file\n";
+                else
+                    cout << "Misspelled command!" << endl;
+                break;
+            case 'q':
+                if (usercmd[2] == 0)
+                    return 0;
+                else
+                    cout << "If you want to quit, dont type anything after 'q' please!" << endl;
+                break;
+            default:
+                cout << "Invalid command!" << endl;
+            }
+        }
+        else
+            cout << "Input is not interpretable!" << endl;
+    }
     return 0;
 }
 void showcmds()
@@ -27,8 +57,4 @@ void showcmds()
     cout << "-p   Add priority to a task" << endl;
     cout << "-lp  List all the tasks by priority" << endl;
     cout << "-q   Quit program" << endl;
-}
-int commandparse(string input)
-{
-
 }
