@@ -1,5 +1,4 @@
 #include "TasksList.h"
-#include "Task.h"
 
 TasksList::TasksList()
 {

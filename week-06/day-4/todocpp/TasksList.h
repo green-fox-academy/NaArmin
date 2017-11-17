@@ -1,7 +1,9 @@
 #ifndef TASKSLIST_H
 #define TASKSLIST_H
-
+#include <iostream>
 #include <string>
+#include <vector>
+#include "Task.h"
 
 using namespace std;
 
@@ -23,6 +25,7 @@ class TasksList
     protected:
 
     private:
+        vector<Task> tlist;
         int numtasks;
 };
 
