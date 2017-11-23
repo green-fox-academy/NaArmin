@@ -2,8 +2,9 @@
 #include <cstdio>
 #include <string>
 #include <vector>
-
+#include <conio.h>
 #include "SerialPortWrapper.h"
+#include "Temperature.h"
 
 using namespace std;
 
@@ -32,12 +33,13 @@ int main()
             serial->readLineFromPort(&line);
         if (logging && (line.length() > 0))
              loggedtemps.push_back(line);
+        if (kbhit()) {
         switch (getchar()) {
         case 'e':
             run = false;
             break;
         case 'l':
-            cout << "Recorded temperatures:\n--- Date ------ Time ------ Degrees" << endl;
+            cout << "Recorded temperatures:\n--- Date ------ Time ---- Degrees -" << endl;
             for (unsigned int i = 0; i < loggedtemps.size(); ++i)
                 cout << loggedtemps[i] << endl;
             break;
@@ -76,6 +78,7 @@ int main()
             usageprint();
             break;
         }
+    }
     }
     if (portopen)
         serial->closePort();
