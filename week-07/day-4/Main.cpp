@@ -22,6 +22,7 @@ int main()
 
     SerialPortWrapper *serial = new SerialPortWrapper("COM19", 115200);
     string line;
+    FILE* fptr;
 
     vector<Temperature> loggedtemps;
     bool portopen = false;
@@ -77,6 +78,30 @@ int main()
                 cout << "Port is already closed!" << endl;
             }
             break;
+        case 'r':
+            char finput[30];
+            fptr = fopen("tempslog", "r");
+            if (!fptr) {
+                cout << "File not found!" << endl;
+            } else {
+                loggedtemps.clear();
+                while (!feof(fptr)) {
+                    fgets(finput, 30, fptr);
+                    Temperature tf(finput);
+                    loggedtemps.push_back(tf);
+                }
+                cout << "Data loaded." << endl;
+            }
+            fclose(fptr);
+            break;
+        case 'f':
+            fptr = fopen("tempslog", "w");
+            for (unsigned int i = 0; i < loggedtemps.size(); ++i) {
+                fputs(loggedtemps[i].get(), fptr);
+                fputc('\n', fptr);
+            }
+            fclose(fptr);
+            break;
         case 'h':
             usageprint();
             break;
@@ -99,5 +124,7 @@ Commands:\n\
  s        Start logging / Stop logging\n\
  c        Close port\n\
  l        List after error handling\n\
- e        Exit from the program\n\n";
+ e        Exit from the program\n\
+ f        Store datas in a file\n\
+ r        Read datas from a file\n\n";
 }
