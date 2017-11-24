@@ -23,7 +23,7 @@ int main()
     SerialPortWrapper *serial = new SerialPortWrapper("COM19", 115200);
     string line;
 
-    vector<string> loggedtemps;
+    vector<Temperature> loggedtemps;
     bool portopen = false;
     bool logging = false;
     bool run = true;
@@ -32,11 +32,9 @@ int main()
         if (portopen)
             serial->readLineFromPort(&line);
         if (logging && (line.length() > 0)) {
-            loggedtemps.push_back(line);
-            Temperature* tp;
-            tp = new Temperature(line);
-            cout << tp->get() << endl;
-            delete tp;
+            Temperature tp(line);
+            if (tp.isvalid)
+                loggedtemps.push_back(tp);
         }
         if (kbhit()) {
         switch (getchar()) {
@@ -44,9 +42,9 @@ int main()
             run = false;
             break;
         case 'l':
-            cout << "Recorded temperatures:\n--- Date ------ Time ---- Degrees -" << endl;
+            cout << "Recorded temperatures:\n--- Date ----- Time -- Degrees -" << endl;
             for (unsigned int i = 0; i < loggedtemps.size(); ++i)
-                cout << loggedtemps[i] << endl;
+                cout << loggedtemps[i].get() << endl;
             break;
         case 'o':
             if (!portopen) {

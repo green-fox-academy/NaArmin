@@ -68,6 +68,6 @@ void Temperature::setsec()
 string Temperature::get()
 {
     char r[30];
-    sprintf(r, "%d.%2d.%2d  %2d:%2d:%2d   %3d", year, month, day, hour, minute, sec, deg);
+    sprintf(r, " %d.%2d.%2d  %2d:%2d:%2d    %3d", year, month, day, hour, minute, sec, deg);
     return r;
 }
