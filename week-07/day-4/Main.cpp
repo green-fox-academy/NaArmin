@@ -31,8 +31,13 @@ int main()
     while(run){
         if (portopen)
             serial->readLineFromPort(&line);
-        if (logging && (line.length() > 0))
-             loggedtemps.push_back(line);
+        if (logging && (line.length() > 0)) {
+            loggedtemps.push_back(line);
+            Temperature* tp;
+            tp = new Temperature(line);
+            cout << tp->get() << endl;
+            delete tp;
+        }
         if (kbhit()) {
         switch (getchar()) {
         case 'e':

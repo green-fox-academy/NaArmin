@@ -11,6 +11,8 @@ class Temperature
     public:
         Temperature();
         Temperature(string inputstr);
+        string get();
+        bool isvalid;
 
     private:
         int year;
