@@ -90,15 +90,21 @@ int main(void)
 
   //TODO:
   //Initialization the push button and the led with using BSP
-  
+  BSP_LED_Init(LED_GREEN);
+  BSP_PB_Init(BUTTON_WAKEUP, BUTTON_MODE_GPIO);
   //Turn the led on to validate the initialization is occured.
-  
+  BSP_LED_On(LED_GREEN);
   /* Add your application code here     */
   /* Infinite loop */
   while (1)
   {
 	  //TODO:
 	  //Write a simple program witch flashes(toggle) the led when the button is pressed
+	  if (BSP_PB_GetState(BUTTON_WAKEUP) == GPIO_PIN_SET) {
+		  HAL_Delay(60);
+		  if (BSP_PB_GetState(BUTTON_WAKEUP) == GPIO_PIN_RESET)
+		  	  BSP_LED_Toggle(LED_GREEN);
+	  }
   }
 }
 
