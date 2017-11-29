@@ -56,8 +56,6 @@ static void Error_Handler(void);
 static void MPU_Config(void);
 static void CPU_CACHE_Enable(void);
 
-void allledon(void);
-void allledoff(void);
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -123,33 +121,26 @@ int main(void)
   {
 
 
-	   {
-
+	  for (int i = 10; i > 5; --i) {
+	  GPIOA->ODR |=  0x00000001;
 	  if ((GPIOC->IDR & (1U << 6)) != (1U << 6)) {
 		  HAL_Delay(50);
-		  if ((GPIOC->IDR & (1U << 6)) == (1U << 6))
-			  allledon();
+		  if ((GPIOC->IDR & (1U << 6)) != (1U << 6))
+			  i = 10;
 	  }
+	  HAL_Delay(200);
 
+	  GPIOA->ODR = GPIOA->ODR & ~0x00000001;
 	  HAL_Delay(160);
-	  allledoff();
+	  GPIOF->ODR |=  1U << i;
+	  HAL_Delay(160);
+	  GPIOF->ODR &= ~(1U << i);
 	  }
 
 	  BSP_LED_Toggle(LED_GREEN);
   }
 }
-void allledon(void)
-{
-	GPIOA->ODR |=  0x00000001;
-	for (int i = 10; i > 5; --i)
-		GPIOF->ODR |=  1U << i;
-}
-void allledoff(void)
-{
-	GPIOA->ODR = GPIOA->ODR & ~0x00000001;
-	for (int i = 10; i > 5; --i)
-		GPIOF->ODR &= ~(1U << i);
-}
+
 /**
   * @brief  System Clock Configuration
   *         The system Clock is configured as follow : 
@@ -299,3 +290,4 @@ void assert_failed(uint8_t* file, uint32_t line)
   */ 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
