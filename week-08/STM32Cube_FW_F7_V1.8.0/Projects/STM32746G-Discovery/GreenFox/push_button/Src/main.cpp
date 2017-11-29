@@ -63,6 +63,7 @@ static void CPU_CACHE_Enable(void);
   * @param  None
   * @retval None
   */
+
 int main(void)
 {
   /* This project template calls firstly two functions in order to configure MPU feature 
@@ -84,12 +85,20 @@ int main(void)
        - Low Level Initialization
      */
   HAL_Init();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /* Configure the System clock to have a frequency of 216 MHz */
   SystemClock_Config();
 
-  //TODO:
-  //Initialization the push button and the led with using BSP
+  GPIO_InitTypeDef tda;
+  //tda.Pin = GPIO_PIN_0;
+  //tda.Mode = GPIO_PIN_OUTPUT_PP;
+  //tda.Pull = GPIO_PULLDOWN;
+  //tda.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOA, &tda);
+
+
+
   BSP_LED_Init(LED_GREEN);
   BSP_PB_Init(BUTTON_WAKEUP, BUTTON_MODE_GPIO);
   //Turn the led on to validate the initialization is occured.
@@ -98,8 +107,10 @@ int main(void)
   /* Infinite loop */
   while (1)
   {
-	  //TODO:
-	  //Write a simple program witch flashes(toggle) the led when the button is pressed
+	  GPIOA->ODR = GPIOA->ODR | 1;          // set the lowest bit to 1, leave the others as they are (this will set the lowest bit - PIN 0 - to 1)
+	  HAL_Delay(1000);                      // wait a second
+	  GPIOA->ODR = GPIOA->ODR & 0xFFFFFFFE;
+
 	  if (BSP_PB_GetState(BUTTON_WAKEUP) == GPIO_PIN_SET) {
 		  HAL_Delay(60);
 		  if (BSP_PB_GetState(BUTTON_WAKEUP) == GPIO_PIN_RESET)

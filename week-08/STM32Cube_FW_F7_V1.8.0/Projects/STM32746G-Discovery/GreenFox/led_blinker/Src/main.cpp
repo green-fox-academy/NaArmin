@@ -88,7 +88,23 @@ int main(void)
 
   /* Configure the System clock to have a frequency of 216 MHz */
   SystemClock_Config();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
 
+  GPIO_InitTypeDef tda;            // create a config structure
+  tda.Pin = GPIO_PIN_0;            // this is about PIN 0
+  tda.Mode = GPIO_MODE_OUTPUT_PP;  // Configure as output with push-up-down enabled
+  tda.Pull = GPIO_PULLDOWN;        // the push-up-down should work as pulldown
+  tda.Speed = GPIO_SPEED_HIGH;     // we need a high-speed output
+
+  HAL_GPIO_Init(GPIOA, &tda);
+
+  GPIO_InitTypeDef tdf;            // create a config structure
+    tdf.Pin = GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10;            // this is about PIN 0
+    tdf.Mode = GPIO_MODE_OUTPUT_PP;  // Configure as output with push-up-down enabled
+    tdf.Pull = GPIO_PULLDOWN;        // the push-up-down should work as pulldown
+    tdf.Speed = GPIO_SPEED_HIGH;
+  HAL_GPIO_Init(GPIOF, &tdf);
 
   /* Add your application code here     */
   BSP_LED_Init(LED_GREEN);
@@ -97,14 +113,26 @@ int main(void)
   /* Infinite loop */
   while (1)
   {
-	  //TODO:
-	  //Flash the ledwith 200 ms period time
+
+
+	  BSP_LED_Toggle(LED_GREEN);
+	  GPIOA->ODR |=  0x00000001;
 	  HAL_Delay(200);
-	  BSP_LED_Toggle(LED_GREEN);
-	  HAL_Delay(40);
-	  BSP_LED_Toggle(LED_GREEN);
-	  HAL_Delay(40);
-	  BSP_LED_Toggle(LED_GREEN);
+
+	  GPIOA->ODR = GPIOA->ODR & ~0x00000001;
+	  HAL_Delay(160);
+	  GPIOF->ODR |=  0x00000040;
+	  HAL_Delay(160);
+	  GPIOF->ODR &=  ~(0x00000400 | 0x00000040);
+
+
+	  GPIOF->ODR |=  0x00000080;
+	  HAL_Delay(160);
+	  GPIOF->ODR |=  0x00000400;
+	  HAL_Delay(160);
+	  GPIOF->ODR |=  0x00000200;
+	  HAL_Delay(160);
+	  GPIOF->ODR |=  0x00000100;
   }
 }
 
