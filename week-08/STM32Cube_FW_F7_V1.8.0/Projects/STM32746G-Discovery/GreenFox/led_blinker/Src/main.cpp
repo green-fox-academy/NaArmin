@@ -89,6 +89,7 @@ int main(void)
   /* Configure the System clock to have a frequency of 216 MHz */
   SystemClock_Config();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOF_CLK_ENABLE();
 
   GPIO_InitTypeDef tda;            // create a config structure
@@ -98,11 +99,16 @@ int main(void)
   tda.Speed = GPIO_SPEED_HIGH;     // we need a high-speed output
 
   HAL_GPIO_Init(GPIOA, &tda);
-
-  GPIO_InitTypeDef tdf;            // create a config structure
-    tdf.Pin = GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10;            // this is about PIN 0
-    tdf.Mode = GPIO_MODE_OUTPUT_PP;  // Configure as output with push-up-down enabled
-    tdf.Pull = GPIO_PULLDOWN;        // the push-up-down should work as pulldown
+  GPIO_InitTypeDef tdc;
+    tdc.Pin = GPIO_PIN_6 | GPIO_PIN_7;
+    tdc.Mode = GPIO_MODE_INPUT;
+    tdc.Pull = GPIO_PULLUP;
+    tdc.Speed = GPIO_SPEED_HIGH;
+  HAL_GPIO_Init(GPIOC, &tdc);
+  GPIO_InitTypeDef tdf;
+    tdf.Pin = GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10;
+    tdf.Mode = GPIO_MODE_OUTPUT_PP;
+    tdf.Pull = GPIO_PULLDOWN;
     tdf.Speed = GPIO_SPEED_HIGH;
   HAL_GPIO_Init(GPIOF, &tdf);
 
@@ -115,24 +121,23 @@ int main(void)
   {
 
 
-	  BSP_LED_Toggle(LED_GREEN);
+	  for (int i = 10; i > 5; --i) {
 	  GPIOA->ODR |=  0x00000001;
+	  if ((GPIOC->IDR & (1U << 6)) != (1U << 6)) {
+		  HAL_Delay(50);
+		  if ((GPIOC->IDR & (1U << 6)) != (1U << 6))
+			  i = 10;
+	  }
 	  HAL_Delay(200);
 
 	  GPIOA->ODR = GPIOA->ODR & ~0x00000001;
 	  HAL_Delay(160);
-	  GPIOF->ODR |=  0x00000040;
+	  GPIOF->ODR |=  1U << i;
 	  HAL_Delay(160);
-	  GPIOF->ODR &=  ~(0x00000400 | 0x00000040);
+	  GPIOF->ODR &= ~(1U << i);
+	  }
 
-
-	  GPIOF->ODR |=  0x00000080;
-	  HAL_Delay(160);
-	  GPIOF->ODR |=  0x00000400;
-	  HAL_Delay(160);
-	  GPIOF->ODR |=  0x00000200;
-	  HAL_Delay(160);
-	  GPIOF->ODR |=  0x00000100;
+	  BSP_LED_Toggle(LED_GREEN);
   }
 }
 
