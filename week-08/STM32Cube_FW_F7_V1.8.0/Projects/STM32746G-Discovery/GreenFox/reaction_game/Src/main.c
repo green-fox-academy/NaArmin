@@ -67,7 +67,7 @@ static void SystemClock_Config(void);
 static void Error_Handler(void);
 static void MPU_Config(void);
 static void CPU_CACHE_Enable(void);
-
+int getavg_result(int*);
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -121,6 +121,8 @@ int main(void)
   uint32_t randomNum;
   uint32_t start;
   int time;
+  int index_r = 0;
+  int results[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
   /* Output a message using printf function */
   printf("\n------------------WELCOME------------------\r\n");
@@ -129,7 +131,7 @@ int main(void)
   while (1)
   {
 	  printf("Let's play a game! Are you ready?\r\n");
-	  HAL_Delay(300);
+	  HAL_Delay(200);
 	  while (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_RESET) {
 		  if (HAL_GetTick() % 1000 == 0)
 			  BSP_LED_Toggle(LED_GREEN);
@@ -142,13 +144,28 @@ int main(void)
 	  BSP_LED_On(LED_GREEN);
 	  start = HAL_GetTick();
 	  while (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_RESET) {
-		  HAL_Delay(2);
+		  HAL_Delay(3);
 		  time =  HAL_GetTick() - start;
 	  }
-	  printf("%d millisecs. ----Press the button for next game!\r\n", time);
+	  results[index_r] = time;
+	  if (index_r > 8)
+		  index_r = 0;
+	  else
+		  index_r++;
+	  printf("%d millisecs. Average of the last 10: %d ---Press the button for next game!\r\n", time, getavg_result(results));
 	  HAL_Delay(300);
 	  while (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_RESET) {}
   }
+}
+int getavg_result(int* numarray)
+{
+	int i = 0;
+	int sum = 0;
+	while (numarray[i] != 0) {
+		sum += numarray[i];
+		++i;
+	}
+	return sum / i;
 }
 /**
   * @brief  Retargets the C library printf function to the USART.
