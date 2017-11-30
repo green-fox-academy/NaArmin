@@ -115,16 +115,25 @@ int main(void)
 
   BSP_COM_Init(COM1, &uart_handle);
 
+  RNG_HandleTypeDef rndcfg;
+  rndcfg.Instance = RNG;
+  HAL_RNG_Init(&rndcfg);
+  uint32_t randomNum;
+
   /* Output a message using printf function */
   printf("\n------------------WELCOME------------------\r\n");
   printf("**********in STATIC reaction game**********\r\n\n");
 
   while (1)
   {
+	  if (HAL_GetTick() % 1000 == 0) {
+	  printf("Let's play a game! Are you ready?\r\n");
 	  BSP_LED_Toggle(LED_GREEN);
-	  HAL_Delay(1000);
-	  if (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_SET)
-		  printf("Let's play a game! Are you ready?\r\n");
+	  randomNum = HAL_RNG_GetRandomNumber(&rndcfg);
+	  printf("%d ", randomNum % 1000);
+	  }
+	  while (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_RESET) {}
+
   }
 }
 /**
