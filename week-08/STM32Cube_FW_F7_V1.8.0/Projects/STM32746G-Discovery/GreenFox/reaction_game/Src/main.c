@@ -119,6 +119,8 @@ int main(void)
   rndcfg.Instance = RNG;
   HAL_RNG_Init(&rndcfg);
   uint32_t randomNum;
+  uint32_t start;
+  int time;
 
   /* Output a message using printf function */
   printf("\n------------------WELCOME------------------\r\n");
@@ -126,14 +128,26 @@ int main(void)
 
   while (1)
   {
-	  if (HAL_GetTick() % 1000 == 0) {
 	  printf("Let's play a game! Are you ready?\r\n");
-	  BSP_LED_Toggle(LED_GREEN);
-	  randomNum = HAL_RNG_GetRandomNumber(&rndcfg);
-	  printf("%d ", randomNum % 1000);
+	  HAL_Delay(300);
+	  while (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_RESET) {
+		  if (HAL_GetTick() % 1000 == 0)
+			  BSP_LED_Toggle(LED_GREEN);
+		  HAL_Delay(1);
 	  }
+	  randomNum = HAL_RNG_GetRandomNumber(&rndcfg);
+	  printf("GO!\r\n");
+	  BSP_LED_Off(LED_GREEN);
+	  HAL_Delay(1000 + randomNum % 9000);
+	  BSP_LED_On(LED_GREEN);
+	  start = HAL_GetTick();
+	  while (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_RESET) {
+		  HAL_Delay(2);
+		  time =  HAL_GetTick() - start;
+	  }
+	  printf("%d millisecs. ----Press the button for next game!\r\n", time);
+	  HAL_Delay(300);
 	  while (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_RESET) {}
-
   }
 }
 /**
