@@ -75,6 +75,7 @@ int getavg_result(int*);
   * @param  None
   * @retval None
   */
+RNG_HandleTypeDef rndcfg;
 int main(void)
 {
   /* This project template calls firstly two functions in order to configure MPU feature 
@@ -95,8 +96,11 @@ int main(void)
        - Set NVIC Group Priority to 4
        - Low Level Initialization
      */
-  HAL_Init();
 
+HAL_Init();
+
+rndcfg.Instance = RNG;
+HAL_RNG_Init(&rndcfg);
   /* Configure the System clock to have a frequency of 216 MHz */
   SystemClock_Config();
 
@@ -115,9 +119,6 @@ int main(void)
 
   BSP_COM_Init(COM1, &uart_handle);
 
-  RNG_HandleTypeDef rndcfg;
-  rndcfg.Instance = RNG;
-  HAL_RNG_Init(&rndcfg);
   uint32_t randomNum = 1;
   uint32_t start = 1;
   int time = 1;
@@ -160,8 +161,7 @@ int main(void)
 		  else
 			  index_r++;
 	  }
-
-	  printf("%dms Average of the last 10 -P1: %d, P2: %d --Press the button for next game%u!\r\n", time, getavg_result(results1), getavg_result(results2), randomNum);
+	  printf("%dms Average of the last 10- P1: %d, P2: %d --Press the button for next game!\r\n", time, getavg_result(results1), getavg_result(results2));
 	  HAL_Delay(300);
 	  while (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_RESET) {}
   }
