@@ -118,11 +118,13 @@ int main(void)
   RNG_HandleTypeDef rndcfg;
   rndcfg.Instance = RNG;
   HAL_RNG_Init(&rndcfg);
-  uint32_t randomNum;
-  uint32_t start;
-  int time;
+  uint32_t randomNum = 1;
+  uint32_t start = 1;
+  int time = 1;
   int index_r = 0;
-  int results[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  int player = 1;
+  int results1[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  int results2[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
   /* Output a message using printf function */
   printf("\n------------------WELCOME------------------\r\n");
@@ -130,7 +132,7 @@ int main(void)
 
   while (1)
   {
-	  printf("Let's play a game! Are you ready?\r\n");
+	  printf("Let's play a game! Player %d, are you ready?\r\n", player);
 	  HAL_Delay(200);
 	  while (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_RESET) {
 		  if (HAL_GetTick() % 1000 == 0)
@@ -144,15 +146,22 @@ int main(void)
 	  BSP_LED_On(LED_GREEN);
 	  start = HAL_GetTick();
 	  while (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_RESET) {
-		  HAL_Delay(3);
+		  HAL_Delay(1);
 		  time =  HAL_GetTick() - start;
 	  }
-	  results[index_r] = time;
-	  if (index_r > 8)
-		  index_r = 0;
-	  else
-		  index_r++;
-	  printf("%d millisecs. Average of the last 10: %d ---Press the button for next game!\r\n", time, getavg_result(results));
+	  if (player == 1) {
+		  results1[index_r] = time;
+		  player = 2;
+	  } else {
+		  results2[index_r] = time;
+		  player = 1;
+		  if (index_r > 8)
+			  index_r = 0;
+		  else
+			  index_r++;
+	  }
+
+	  printf("%dms Average of the last 10 -P1: %d, P2: %d --Press the button for next game%u!\r\n", time, getavg_result(results1), getavg_result(results2), randomNum);
 	  HAL_Delay(300);
 	  while (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_RESET) {}
   }
@@ -165,7 +174,9 @@ int getavg_result(int* numarray)
 		sum += numarray[i];
 		++i;
 	}
-	return sum / i;
+	if (i)
+		return sum / i;
+	return 0;
 }
 /**
   * @brief  Retargets the C library printf function to the USART.
