@@ -37,6 +37,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include <string.h>
 
 /** @addtogroup STM32F7xx_HAL_Examples
   * @{
@@ -50,14 +51,23 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+UART_HandleTypeDef uart_handle;
+
 /* Private function prototypes -----------------------------------------------*/
+
+#ifdef __GNUC__
+/* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf
+   set to 'Yes') calls __io_putchar() */
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif /* __GNUC__ */
+
 static void SystemClock_Config(void);
 static void Error_Handler(void);
 static void MPU_Config(void);
 static void CPU_CACHE_Enable(void);
 
-void allledon(void);
-void allledoff(void);
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -67,7 +77,6 @@ void allledoff(void);
   */
 int main(void)
 {
-
   /* This project template calls firstly two functions in order to configure MPU feature 
      and to enable the CPU Cache, respectively MPU_Config() and CPU_CACHE_Enable().
      These functions are provided as template implementation that User may integrate 
@@ -90,64 +99,47 @@ int main(void)
 
   /* Configure the System clock to have a frequency of 216 MHz */
   SystemClock_Config();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOF_CLK_ENABLE();
 
-  GPIO_InitTypeDef tda;            // create a config structure
-  tda.Pin = GPIO_PIN_0;            // this is about PIN 0
-  tda.Mode = GPIO_MODE_OUTPUT_PP;  // Configure as output with push-up-down enabled
-  tda.Pull = GPIO_PULLDOWN;        // the push-up-down should work as pulldown
-  tda.Speed = GPIO_SPEED_HIGH;     // we need a high-speed output
-
-  HAL_GPIO_Init(GPIOA, &tda);
-  GPIO_InitTypeDef tdc;
-    tdc.Pin = GPIO_PIN_6 | GPIO_PIN_7;
-    tdc.Mode = GPIO_MODE_INPUT;
-    tdc.Pull = GPIO_PULLUP;
-    tdc.Speed = GPIO_SPEED_HIGH;
-  HAL_GPIO_Init(GPIOC, &tdc);
-  GPIO_InitTypeDef tdf;
-    tdf.Pin = GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10;
-    tdf.Mode = GPIO_MODE_OUTPUT_PP;
-    tdf.Pull = GPIO_PULLDOWN;
-    tdf.Speed = GPIO_SPEED_HIGH;
-  HAL_GPIO_Init(GPIOF, &tdf);
-
-  /* Add your application code here     */
+  /* Add your application code here
+     */
   BSP_LED_Init(LED_GREEN);
-  BSP_LED_On(LED_GREEN);
 
-  /* Infinite loop */
-  while (1)
-  {
-	   {
+  uart_handle.Init.BaudRate   = 115200;
+  uart_handle.Init.WordLength = UART_WORDLENGTH_8B;
+  uart_handle.Init.StopBits   = UART_STOPBITS_1;
+  uart_handle.Init.Parity     = UART_PARITY_NONE;
+  uart_handle.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
+  uart_handle.Init.Mode       = UART_MODE_TX_RX;
 
-	  if ((GPIOC->IDR & (1U << 6)) != (1U << 6)) {
-		  HAL_Delay(50);
-		  if ((GPIOC->IDR & (1U << 6)) == (1U << 6))
-			  allledon();
+  BSP_COM_Init(COM1, &uart_handle);
+
+  /* Output without printf, using HAL function*/
+  //char msg[] = "UART HAL Example\r\n";
+  //HAL_UART_Transmit(&uart_handle, msg, strlen(msg), 100);
+
+  /* Output a message using printf function */
+  printf("\n-----------------WELCOME-----------------\r\n");
+  printf("**********in STATIC timer & pwm WS**********\r\n\n");
+
+	  while (1)
+	  {
 	  }
+}
 
-	  HAL_Delay(160);
-	  allledoff();
-	  }
+/**
+  * @brief  Retargets the C library printf function to the USART.
+  * @param  None
+  * @retval None
+  */
+PUTCHAR_PROTOTYPE
+{
+  /* Place your implementation of fputc here */
+  /* e.g. write a character to the EVAL_COM1 and Loop until the end of transmission */
+  HAL_UART_Transmit(&uart_handle, (uint8_t *)&ch, 1, 0xFFFF);
 
-	  BSP_LED_Toggle(LED_GREEN);
-  }
+  return ch;
 }
-void allledon(void)
-{
-	GPIOA->ODR |=  0x00000001;
-	for (int i = 10; i > 5; --i)
-		GPIOF->ODR |=  1U << i;
-}
-void allledoff(void)
-{
-	GPIOA->ODR = GPIOA->ODR & ~0x00000001;
-	for (int i = 10; i > 5; --i)
-		GPIOF->ODR &= ~(1U << i);
-}
+
 /**
   * @brief  System Clock Configuration
   *         The system Clock is configured as follow : 

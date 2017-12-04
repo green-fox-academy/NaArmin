@@ -37,6 +37,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include <string.h>
+
 
 /** @addtogroup STM32F7xx_HAL_Examples
   * @{
@@ -45,19 +47,27 @@
 /** @addtogroup Templates
   * @{
   */ 
-
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+UART_HandleTypeDef uart_handle;
+
 /* Private function prototypes -----------------------------------------------*/
+
+#ifdef __GNUC__
+/* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf
+   set to 'Yes') calls __io_putchar() */
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif /* __GNUC__ */
+
 static void SystemClock_Config(void);
 static void Error_Handler(void);
 static void MPU_Config(void);
 static void CPU_CACHE_Enable(void);
-
-void allledon(void);
-void allledoff(void);
+int getavg_result(int*);
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -65,9 +75,9 @@ void allledoff(void);
   * @param  None
   * @retval None
   */
+RNG_HandleTypeDef rndcfg;
 int main(void)
 {
-
   /* This project template calls firstly two functions in order to configure MPU feature 
      and to enable the CPU Cache, respectively MPU_Config() and CPU_CACHE_Enable().
      These functions are provided as template implementation that User may integrate 
@@ -86,68 +96,102 @@ int main(void)
        - Set NVIC Group Priority to 4
        - Low Level Initialization
      */
-  HAL_Init();
 
+HAL_Init();
+
+rndcfg.Instance = RNG;
+HAL_RNG_Init(&rndcfg);
   /* Configure the System clock to have a frequency of 216 MHz */
   SystemClock_Config();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOF_CLK_ENABLE();
 
-  GPIO_InitTypeDef tda;            // create a config structure
-  tda.Pin = GPIO_PIN_0;            // this is about PIN 0
-  tda.Mode = GPIO_MODE_OUTPUT_PP;  // Configure as output with push-up-down enabled
-  tda.Pull = GPIO_PULLDOWN;        // the push-up-down should work as pulldown
-  tda.Speed = GPIO_SPEED_HIGH;     // we need a high-speed output
 
-  HAL_GPIO_Init(GPIOA, &tda);
-  GPIO_InitTypeDef tdc;
-    tdc.Pin = GPIO_PIN_6 | GPIO_PIN_7;
-    tdc.Mode = GPIO_MODE_INPUT;
-    tdc.Pull = GPIO_PULLUP;
-    tdc.Speed = GPIO_SPEED_HIGH;
-  HAL_GPIO_Init(GPIOC, &tdc);
-  GPIO_InitTypeDef tdf;
-    tdf.Pin = GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10;
-    tdf.Mode = GPIO_MODE_OUTPUT_PP;
-    tdf.Pull = GPIO_PULLDOWN;
-    tdf.Speed = GPIO_SPEED_HIGH;
-  HAL_GPIO_Init(GPIOF, &tdf);
-
-  /* Add your application code here     */
+  /* Add your application code here
+     */
   BSP_LED_Init(LED_GREEN);
-  BSP_LED_On(LED_GREEN);
+  BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_GPIO);
 
-  /* Infinite loop */
+  uart_handle.Init.BaudRate   = 115200;
+  uart_handle.Init.WordLength = UART_WORDLENGTH_8B;
+  uart_handle.Init.StopBits   = UART_STOPBITS_1;
+  uart_handle.Init.Parity     = UART_PARITY_NONE;
+  uart_handle.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
+  uart_handle.Init.Mode       = UART_MODE_TX_RX;
+
+  BSP_COM_Init(COM1, &uart_handle);
+
+  uint32_t randomNum = 1;
+  uint32_t start = 1;
+  int time = 1;
+  int index_r = 0;
+  int player = 1;
+  int results1[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  int results2[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  /* Output a message using printf function */
+  printf("\n------------------WELCOME------------------\r\n");
+  printf("**********in STATIC reaction game**********\r\n\n");
+
   while (1)
   {
-	   {
-
-	  if ((GPIOC->IDR & (1U << 6)) != (1U << 6)) {
-		  HAL_Delay(50);
-		  if ((GPIOC->IDR & (1U << 6)) == (1U << 6))
-			  allledon();
+	  printf("Let's play a game! Player %d, are you ready?\r\n", player);
+	  HAL_Delay(200);
+	  while (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_RESET) {
+		  if (HAL_GetTick() % 1000 == 0)
+			  BSP_LED_Toggle(LED_GREEN);
+		  HAL_Delay(1);
 	  }
-
-	  HAL_Delay(160);
-	  allledoff();
+	  randomNum = HAL_RNG_GetRandomNumber(&rndcfg);
+	  printf("GO!\r\n");
+	  BSP_LED_Off(LED_GREEN);
+	  HAL_Delay(1000 + randomNum % 9000);
+	  BSP_LED_On(LED_GREEN);
+	  start = HAL_GetTick();
+	  while (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_RESET) {
+		  HAL_Delay(1);
+		  time =  HAL_GetTick() - start;
 	  }
-
-	  BSP_LED_Toggle(LED_GREEN);
+	  if (player == 1) {
+		  results1[index_r] = time;
+		  player = 2;
+	  } else {
+		  results2[index_r] = time;
+		  player = 1;
+		  if (index_r > 8)
+			  index_r = 0;
+		  else
+			  index_r++;
+	  }
+	  printf("%dms Average of the last 10- P1: %d, P2: %d --Press the button for next game!\r\n", time, getavg_result(results1), getavg_result(results2));
+	  HAL_Delay(300);
+	  while (BSP_PB_GetState(BUTTON_KEY) == GPIO_PIN_RESET) {}
   }
 }
-void allledon(void)
+int getavg_result(int* numarray)
 {
-	GPIOA->ODR |=  0x00000001;
-	for (int i = 10; i > 5; --i)
-		GPIOF->ODR |=  1U << i;
+	int i = 0;
+	int sum = 0;
+	while (numarray[i] != 0) {
+		sum += numarray[i];
+		++i;
+	}
+	if (i)
+		return sum / i;
+	return 0;
 }
-void allledoff(void)
+/**
+  * @brief  Retargets the C library printf function to the USART.
+  * @param  None
+  * @retval None
+  */
+PUTCHAR_PROTOTYPE
 {
-	GPIOA->ODR = GPIOA->ODR & ~0x00000001;
-	for (int i = 10; i > 5; --i)
-		GPIOF->ODR &= ~(1U << i);
+  /* Place your implementation of fputc here */
+  /* e.g. write a character to the EVAL_COM1 and Loop until the end of transmission */
+  HAL_UART_Transmit(&uart_handle, (uint8_t *)&ch, 1, 0xFFFF);
+
+  return ch;
 }
+
 /**
   * @brief  System Clock Configuration
   *         The system Clock is configured as follow : 
@@ -297,3 +341,4 @@ void assert_failed(uint8_t* file, uint32_t line)
   */ 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
