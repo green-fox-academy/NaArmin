@@ -73,6 +73,11 @@ void EXTI15_10_IRQHandler();
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 /* Private functions ---------------------------------------------------------*/
 
+TIM_HandleTypeDef    TimHandle;           //the timer's config structure
+TIM_OC_InitTypeDef sConfig;
+GPIO_InitTypeDef ledConfig;               //set upthe pin, push-pull, no pullup..etc
+GPIO_InitTypeDef conf;                // create the configuration struct
+
 /**
  * @brief  Main program
  * @param  None
@@ -103,23 +108,34 @@ int main(void) {
 	SystemClock_Config();
 	__HAL_RCC_GPIOA_CLK_ENABLE();         // enable the GPIOI clock
 	__HAL_RCC_GPIOI_CLK_ENABLE();         // enable the GPIOI clock
+	__HAL_RCC_TIM1_CLK_ENABLE();
 
-	GPIO_InitTypeDef ledConfig;               //set upthe pin, push-pull, no pullup..etc
-	  ledConfig.Mode = GPIO_MODE_OUTPUT_PP;
-	  ledConfig.Pin = GPIO_PIN_8;
-	  ledConfig.Pull = GPIO_PULLDOWN;
-	  ledConfig.Speed = GPIO_SPEED_HIGH;
-	  ledConfig.Alternate = GPIO_AF1_TIM1;      // and the alternate function is to use TIM1 timer's first channel
+	TimHandle.Instance               = TIM1;
+	TimHandle.Init.Period            = 1000;
+	TimHandle.Init.Prescaler         = 0xFF;
+	TimHandle.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
+	TimHandle.Init.CounterMode       = TIM_COUNTERMODE_UP;
+	//HAL_TIM_Base_MspInit(&TimHandle);
+	//HAL_TIM_Base_Init(&TimHandle);            //Configure the timer
+	//HAL_TIM_Base_Start(&TimHandle);
+	HAL_TIM_PWM_Init(&TimHandle);
+
+	sConfig.Pulse = 1000;
+	sConfig.OCMode = TIM_OCMODE_PWM1;
+	HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_1);
+
+	ledConfig.Mode = GPIO_MODE_AF_PP;
+	ledConfig.Pin = GPIO_PIN_8;
+	ledConfig.Pull = GPIO_PULLDOWN;
+	ledConfig.Speed = GPIO_SPEED_HIGH;
+	ledConfig.Alternate = GPIO_AF1_TIM1;      // and the alternate function is to use TIM1 timer's first channel
 
 	HAL_GPIO_Init(GPIOA, &ledConfig);
 
-	GPIO_InitTypeDef conf;                // create the configuration struct
 	conf.Pin = GPIO_PIN_11;               // the pin is the 11
-
 	conf.Pull = GPIO_NOPULL;
 	conf.Speed = GPIO_SPEED_FAST;         // port speed to fast
-
-	/* Here is the trick: our mode is interrupt on rising edge */
 	conf.Mode = GPIO_MODE_IT_RISING;
 
 	HAL_GPIO_Init(GPIOI, &conf);
@@ -130,7 +146,7 @@ int main(void) {
 	/* tell the interrupt handling unit to process our interrupts */
 	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
-	BSP_PB_Init(BUTTON_WAKEUP, BUTTON_MODE_EXTI);
+	BSP_PB_Init(BUTTON_WAKEUP, BUTTON_MODE_GPIO);
 
 	/* Add your application code here
 	 */
@@ -151,18 +167,15 @@ int main(void) {
 
 	BSP_LED_On(LED_GREEN);
 	while (1) {
-		HAL_Delay(100);
+		HAL_Delay(200);
 		BSP_LED_Toggle(LED_GREEN);
-
 	}
 }
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_8);
-	HAL_Delay(800);
-	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_8);
-	HAL_Delay(700);
-	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_8);
-	HAL_Delay(300);
+	if (TIM1->CCR1 > 1)
+		TIM1->CCR1 = 1;
+	else
+		TIM1->CCR1 = 800;
 }
 void EXTI15_10_IRQHandler() {
 	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
