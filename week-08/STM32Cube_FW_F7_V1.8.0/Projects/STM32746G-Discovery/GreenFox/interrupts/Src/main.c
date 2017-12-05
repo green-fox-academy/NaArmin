@@ -69,7 +69,8 @@ static void SystemClock_Config(void);
 static void Error_Handler(void);
 static void MPU_Config(void);
 static void CPU_CACHE_Enable(void);
-
+void EXTI15_10_IRQHandler();
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -103,6 +104,15 @@ int main(void) {
 	__HAL_RCC_GPIOA_CLK_ENABLE();         // enable the GPIOI clock
 	__HAL_RCC_GPIOI_CLK_ENABLE();         // enable the GPIOI clock
 
+	GPIO_InitTypeDef ledConfig;               //set upthe pin, push-pull, no pullup..etc
+	  ledConfig.Mode = GPIO_MODE_OUTPUT_PP;
+	  ledConfig.Pin = GPIO_PIN_8;
+	  ledConfig.Pull = GPIO_PULLDOWN;
+	  ledConfig.Speed = GPIO_SPEED_HIGH;
+	  ledConfig.Alternate = GPIO_AF1_TIM1;      // and the alternate function is to use TIM1 timer's first channel
+
+	HAL_GPIO_Init(GPIOA, &ledConfig);
+
 	GPIO_InitTypeDef conf;                // create the configuration struct
 	conf.Pin = GPIO_PIN_11;               // the pin is the 11
 
@@ -113,6 +123,13 @@ int main(void) {
 	conf.Mode = GPIO_MODE_IT_RISING;
 
 	HAL_GPIO_Init(GPIOI, &conf);
+
+	/* assign the lowest priority to our interrupt line */
+	HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0x0F, 0x00);
+
+	/* tell the interrupt handling unit to process our interrupts */
+	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
 	BSP_PB_Init(BUTTON_WAKEUP, BUTTON_MODE_EXTI);
 
 	/* Add your application code here
@@ -127,20 +144,29 @@ int main(void) {
 	uart_handle.Init.Mode = UART_MODE_TX_RX;
 
 	BSP_COM_Init(COM1, &uart_handle);
-
+	HAL_NVIC_SetPriority(SysTick_IRQn, 0x0E ,0);
 
 	printf("\n-----------------WELCOME-----------------\r\n");
 	printf("**********in STATIC interrupts WS**********\r\n\n");
 
-
+	BSP_LED_On(LED_GREEN);
 	while (1) {
-		if (HAL_GPIO_ReadPin(GPIOI, GPIO_PIN_11) == GPIO_PIN_SET)
-			BSP_LED_On(LED_GREEN);
-		else
-			BSP_LED_Off(LED_GREEN);
+		HAL_Delay(100);
+		BSP_LED_Toggle(LED_GREEN);
+
 	}
 }
-
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_8);
+	HAL_Delay(800);
+	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_8);
+	HAL_Delay(700);
+	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_8);
+	HAL_Delay(300);
+}
+void EXTI15_10_IRQHandler() {
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
+}
 /**
  * @brief  Retargets the C library printf function to the USART.
  * @param  None
