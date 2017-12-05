@@ -102,6 +102,37 @@ int main(void)
 
   /* Add your application code here
      */
+  TIM_HandleTypeDef    TimHandle;           //the timer's config structure
+
+    TimHandle.Instance               = TIM1;
+    TimHandle.Init.Period            = 1000;
+    TimHandle.Init.Prescaler         = 10000;    		;
+    TimHandle.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
+    TimHandle.Init.CounterMode       = TIM_COUNTERMODE_UP;
+    HAL_TIM_Base_MspInit(&TimHandle);
+    HAL_TIM_Base_Init(&TimHandle);            //Configure the timer
+    HAL_TIM_PWM_Init(&TimHandle);
+    HAL_TIM_Base_Start(&TimHandle);
+
+    TIM_OC_InitTypeDef sConfig;
+    sConfig.Pulse = 600;
+    sConfig.OCMode = TIM_OCMODE_PWM1;
+    HAL_TIM_PWM_ConfigChannel(&TimHandle, &sConfig, TIM_CHANNEL_1);
+
+    HAL_TIM_PWM_Start(&TimHandle, TIM_CHANNEL_1);
+  __HAL_RCC_TIM1_CLK_ENABLE();              // enable TIM1 clock
+
+  __HAL_RCC_GPIOA_CLK_ENABLE();             //Enable GPIOA clock
+
+  GPIO_InitTypeDef ledConfig;               //set upthe pin, push-pull, no pullup..etc
+  ledConfig.Mode = GPIO_MODE_AF_PP;
+  ledConfig.Pin = GPIO_PIN_8;
+  ledConfig.Pull = GPIO_PULLDOWN;
+  ledConfig.Speed = GPIO_SPEED_HIGH;
+  ledConfig.Alternate = GPIO_AF1_TIM1;      // and the alternate function is to use TIM1 timer's first channel
+
+  HAL_GPIO_Init(GPIOA, &ledConfig);
+
   BSP_LED_Init(LED_GREEN);
 
   uart_handle.Init.BaudRate   = 115200;
@@ -120,7 +151,8 @@ int main(void)
   /* Output a message using printf function */
   printf("\n-----------------WELCOME-----------------\r\n");
   printf("**********in STATIC timer & pwm WS**********\r\n\n");
-
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, GPIO_PIN_SET);
+  //TIM1->CCR1 = 226;
 	  while (1)
 	  {
 	  }
