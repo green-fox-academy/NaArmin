@@ -69,8 +69,8 @@ static void SystemClock_Config(void);
 static void Error_Handler(void);
 static void MPU_Config(void);
 static void CPU_CACHE_Enable(void);
-void TIM2_IRQHandler();
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+void EXTI15_10_IRQHandler();
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 /* Private functions ---------------------------------------------------------*/
 
 TIM_HandleTypeDef TimHandle;           //the timer's config structure
@@ -78,7 +78,7 @@ TIM_HandleTypeDef Tim2Hndl;
 TIM_OC_InitTypeDef sConfig;
 GPIO_InitTypeDef ledConfig;               //set upthe pin, push-pull, no pullup..etc
 GPIO_InitTypeDef conf;                // create the configuration struct
-
+int speed = 0;
 /**
  * @brief  Main program
  * @param  None
@@ -110,7 +110,6 @@ int main(void) {
 	__HAL_RCC_GPIOA_CLK_ENABLE();         // enable the GPIOI clock
 	__HAL_RCC_GPIOI_CLK_ENABLE();         // enable the GPIOI clock
 	__HAL_RCC_TIM1_CLK_ENABLE();
-	__HAL_RCC_TIM2_CLK_ENABLE();
 
 	TimHandle.Instance               = TIM1;
 	TimHandle.Init.Period            = 1000;
@@ -133,53 +132,44 @@ int main(void) {
 
 	HAL_GPIO_Init(GPIOA, &ledConfig);
 
-	Tim2Hndl.Instance = TIM2;
-	Tim2Hndl.Init.Prescaler = 0xFFFF;
-	Tim2Hndl.Init.Period = 823;
-	Tim2Hndl.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-	Tim2Hndl.Init.CounterMode = TIM_COUNTERMODE_UP;
-	HAL_TIM_Base_Init(&Tim2Hndl);
-	HAL_TIM_Base_Start_IT(&Tim2Hndl);
+	conf.Pin = GPIO_PIN_11;               // the pin is the 11
+	conf.Pull = GPIO_NOPULL;
+	conf.Speed = GPIO_SPEED_FAST;         // port speed to fast
+	conf.Mode = GPIO_MODE_IT_RISING;
+
+	HAL_GPIO_Init(GPIOI, &conf);
+
 	/* assign the lowest priority to our interrupt line */
 	HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0x0F, 0x00);
-	HAL_NVIC_SetPriority(TIM2_IRQn, 0x0F, 0);
 	/* tell the interrupt handling unit to process our interrupts */
 	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
-	HAL_NVIC_EnableIRQ(TIM2_IRQn);
 
 	BSP_PB_Init(BUTTON_WAKEUP, BUTTON_MODE_GPIO);
 
 	/* Add your application code here
 	 */
 	BSP_LED_Init(LED_GREEN);
-
-	uart_handle.Init.BaudRate = 115200;
-	uart_handle.Init.WordLength = UART_WORDLENGTH_8B;
-	uart_handle.Init.StopBits = UART_STOPBITS_1;
-	uart_handle.Init.Parity = UART_PARITY_NONE;
-	uart_handle.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-	uart_handle.Init.Mode = UART_MODE_TX_RX;
-
-	BSP_COM_Init(COM1, &uart_handle);
 	HAL_NVIC_SetPriority(SysTick_IRQn, 0x0E ,0);
-
-	printf("\n-----------------WELCOME-----------------\r\n");
-	printf("**********in STATIC interrupts WS**********\r\n\n");
 
 	BSP_LED_On(LED_GREEN);
 	while (1) {
-		HAL_Delay(166);
+		HAL_Delay(15);
 		BSP_LED_Toggle(LED_GREEN);
+		if (speed > 20)
+			speed -= speed / 2 / 100;
+		if (speed > 0)
+			speed -= 1;
+		if (speed > 1000)
+			TIM1->CCR1 = 1000;
+		else
+			TIM1->CCR1 = speed;
 	}
 }
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	if (TIM1->CCR1 > 0)
-		TIM1->CCR1 = 0;
-	else
-		TIM1->CCR1 = 500;
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	speed += 100;
 }
-void TIM2_IRQHandler() {
-	HAL_TIM_IRQHandler(&Tim2Hndl);
+void EXTI15_10_IRQHandler() {
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
 }
 /**
  * @brief  Retargets the C library printf function to the USART.
