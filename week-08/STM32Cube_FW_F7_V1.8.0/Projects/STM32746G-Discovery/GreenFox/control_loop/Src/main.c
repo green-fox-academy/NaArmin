@@ -51,7 +51,6 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-UART_HandleTypeDef uart_handle;
 
 volatile uint32_t timIntPeriod;
 
@@ -74,7 +73,7 @@ void EXTI3_IRQHandler();
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim);
 /* Private functions ---------------------------------------------------------*/
-
+UART_HandleTypeDef uart_handle;
 TIM_HandleTypeDef TimHandle;           //the timer's config structure
 TIM_HandleTypeDef Tim2Hndl;
 TIM_HandleTypeDef rpmHandl;
@@ -188,15 +187,15 @@ int main(void) {
 
 	BSP_LED_On(LED_GREEN);
 	HAL_Delay(500);
-	printf("START");
+	printf("START\r\n");
 	while (1) {
 		HAL_Delay(15);
 		//BSP_LED_Toggle(LED_GREEN);
 
 		if (speed > 1000)
 			TIM12->CCR1 = 1000;
-		if (speed < 300)
-			TIM12->CCR1 = 300;
+		if (speed < 400)
+			TIM12->CCR1 = 400;
 		if (speed < 0)
 			TIM12->CCR1 = 0;
 		else

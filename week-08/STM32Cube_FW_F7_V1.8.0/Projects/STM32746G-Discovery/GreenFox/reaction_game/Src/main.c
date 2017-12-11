@@ -261,6 +261,7 @@ static void Error_Handler(void)
   /* User may add here some code to deal with this error */
   while(1)
   {
+
   }
 }
 
