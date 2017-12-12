@@ -53,6 +53,8 @@
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef uart_handle;
 GPIO_InitTypeDef uart_gpio;
+GPIO_InitTypeDef GPIOTxConfig;
+I2C_HandleTypeDef I2CHandle;
 /* Private function prototypes -----------------------------------------------*/
 
 #ifdef __GNUC__
@@ -103,18 +105,35 @@ int main(void)
 
   /* Add your application code here
      */
-  __HAL_RCC_GPIOA_CLK_ENABLE();              // enable TIM1 clock
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_I2C1_CLK_ENABLE();
   DISCOVERY_COMx_TX_GPIO_CLK_ENABLE(COM1);
   DISCOVERY_COMx_RX_GPIO_CLK_ENABLE(COM1);
   DISCOVERY_COMx_CLK_ENABLE(COM1);
 
-  uart_gpio.Pin = GPIO_PIN_9 | GPIO_PIN_7;
+  GPIOTxConfig.Mode = GPIO_MODE_AF_OD;      //configure in pen drain mode
+  GPIOTxConfig.Alternate = GPIO_AF4_I2C1;
+  GPIOTxConfig.Pin = GPIO_PIN_8 | GPIO_PIN_9;
+  GPIOTxConfig.Speed = GPIO_SPEED_FAST;
+  GPIOTxConfig.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIOTxConfig);
+
+  I2CHandle.Instance = I2C1;
+  I2CHandle.Init.Timing = 0x40912732;
+  I2CHandle.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  HAL_I2C_Init(&I2CHandle);
+
+  uart_gpio.Pin = GPIO_PIN_9;
   uart_gpio.Mode = GPIO_MODE_AF_PP;
   uart_gpio.Speed = GPIO_SPEED_FAST;
   uart_gpio.Pull = GPIO_PULLUP;
   uart_gpio.Alternate = GPIO_AF7_USART1;
   HAL_GPIO_Init(GPIOA, &uart_gpio);
+
+  uart_gpio.Pin = GPIO_PIN_7;
   HAL_GPIO_Init(GPIOB, &uart_gpio);
+
   uart_handle.Instance = USART1;
   uart_handle.Init.BaudRate   = 115200;
   uart_handle.Init.WordLength = UART_WORDLENGTH_8B;
@@ -123,6 +142,7 @@ int main(void)
   uart_handle.Init.HwFlowCtl  = UART_HWCONTROL_NONE;
   uart_handle.Init.Mode       = UART_MODE_TX_RX;
   HAL_UART_Init(&uart_handle);
+
 
   //BSP_COM_Init(COM1, &uart_handle);
   BSP_LED_Init(LED_GREEN);
@@ -133,13 +153,16 @@ int main(void)
 
   /* Output a message using printf function */
   printf("\n-----------------WELCOME-----------------\r\n");
-  printf("**********in STATIC U(S)ART I/O WS**********\r\n\n");
+  printf("******in STATIC U(S)ART I/O I2C WS*******\r\n\n");
   char recstring[100];
+  uint8_t temp = 0;
+  uint8_t command = 0;
 	  while (1)
 	  {
-		  printf("%s\r\n", recstring);
+		  HAL_I2C_Master_Transmit(&I2CHandle, 0b1001000 << 1, &command, 1, 1);
+		  HAL_I2C_Master_Receive(&I2CHandle, 0b1001000 << 1, &temp, 1, 1);
+		  printf("%d\r\n", temp);
 		  HAL_Delay(2000);
-		  HAL_UART_Receive(&uart_handle, &recstring, 99, 3000);
 	  }
 }
 
