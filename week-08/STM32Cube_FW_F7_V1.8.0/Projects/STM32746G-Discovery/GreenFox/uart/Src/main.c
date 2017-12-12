@@ -105,14 +105,16 @@ int main(void)
      */
   __HAL_RCC_GPIOA_CLK_ENABLE();              // enable TIM1 clock
   DISCOVERY_COMx_TX_GPIO_CLK_ENABLE(COM1);
+  DISCOVERY_COMx_RX_GPIO_CLK_ENABLE(COM1);
   DISCOVERY_COMx_CLK_ENABLE(COM1);
 
-  uart_gpio.Pin = GPIO_PIN_9;
+  uart_gpio.Pin = GPIO_PIN_9 | GPIO_PIN_7;
   uart_gpio.Mode = GPIO_MODE_AF_PP;
   uart_gpio.Speed = GPIO_SPEED_FAST;
   uart_gpio.Pull = GPIO_PULLUP;
   uart_gpio.Alternate = GPIO_AF7_USART1;
   HAL_GPIO_Init(GPIOA, &uart_gpio);
+  HAL_GPIO_Init(GPIOB, &uart_gpio);
   uart_handle.Instance = USART1;
   uart_handle.Init.BaudRate   = 115200;
   uart_handle.Init.WordLength = UART_WORDLENGTH_8B;
@@ -132,8 +134,12 @@ int main(void)
   /* Output a message using printf function */
   printf("\n-----------------WELCOME-----------------\r\n");
   printf("**********in STATIC U(S)ART I/O WS**********\r\n\n");
+  char recstring[100];
 	  while (1)
 	  {
+		  printf("%s\r\n", recstring);
+		  HAL_Delay(2000);
+		  HAL_UART_Receive(&uart_handle, &recstring, 99, 3000);
 	  }
 }
 
