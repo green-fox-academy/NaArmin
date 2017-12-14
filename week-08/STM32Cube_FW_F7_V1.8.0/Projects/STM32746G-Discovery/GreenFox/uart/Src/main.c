@@ -55,6 +55,11 @@ UART_HandleTypeDef uart_handle;
 GPIO_InitTypeDef uart_gpio;
 GPIO_InitTypeDef GPIOTxConfig;
 I2C_HandleTypeDef I2CHandle;
+TIM_HandleTypeDef Timhandle;
+volatile uint8_t command = 0;
+volatile uint8_t temp = 0;
+
+
 /* Private function prototypes -----------------------------------------------*/
 
 #ifdef __GNUC__
@@ -71,8 +76,11 @@ static void MPU_Config(void);
 static void CPU_CACHE_Enable(void);
 
 /* Private functions ---------------------------------------------------------*/
-
-
+void TIM_IRQHandler();
+void I2C1_EV_IRQHandler();
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c);
+void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c);
 /**
   * @brief  Main program
   * @param  None
@@ -105,12 +113,22 @@ int main(void)
 
   /* Add your application code here
      */
+  __HAL_RCC_TIM1_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_I2C1_CLK_ENABLE();
   DISCOVERY_COMx_TX_GPIO_CLK_ENABLE(COM1);
   DISCOVERY_COMx_RX_GPIO_CLK_ENABLE(COM1);
   DISCOVERY_COMx_CLK_ENABLE(COM1);
+
+  Timhandle.Instance = TIM1;
+  Timhandle.Init.Prescaler = 0xFFFF;
+  Timhandle.Init.Period = 3679;
+  Timhandle.Init.CounterMode = TIM_COUNTERMODE_UP;
+  Timhandle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  HAL_TIM_Base_MspInit(&Timhandle);
+  HAL_TIM_Base_Init(&Timhandle);
+  HAL_TIM_Base_Start_IT(&Timhandle);
 
   GPIOTxConfig.Mode = GPIO_MODE_AF_OD;      //configure in pen drain mode
   GPIOTxConfig.Alternate = GPIO_AF4_I2C1;
@@ -143,6 +161,11 @@ int main(void)
   uart_handle.Init.Mode       = UART_MODE_TX_RX;
   HAL_UART_Init(&uart_handle);
 
+  HAL_NVIC_SetPriority(I2C1_EV_IRQn, 0x0F, 0);
+  HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
+  HAL_NVIC_SetPriority(TIM1_UP_TIM10_IRQn, 0x0E, 0);
+  HAL_NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
+  HAL_NVIC_SetPriority(SysTick_IRQn, 0x0E ,0);
 
   //BSP_COM_Init(COM1, &uart_handle);
   BSP_LED_Init(LED_GREEN);
@@ -154,18 +177,34 @@ int main(void)
   /* Output a message using printf function */
   printf("\n-----------------WELCOME-----------------\r\n");
   printf("******in STATIC U(S)ART I/O I2C WS*******\r\n\n");
-  char recstring[100];
-  uint8_t temp = 0;
-  uint8_t command = 0;
+  //char recstring[100];
+  uint8_t curr_temp = 0;
+
 	  while (1)
 	  {
-		  HAL_I2C_Master_Transmit(&I2CHandle, 0b1001000 << 1, &command, 1, 1);
-		  HAL_I2C_Master_Receive(&I2CHandle, 0b1001000 << 1, &temp, 1, 1);
-		  printf("%d\r\n", temp);
-		  HAL_Delay(2000);
+		  if (curr_temp != temp) {
+			  printf("%d\r\n", temp);
+			  curr_temp = temp;
+		  }
 	  }
 }
+void TIM_IRQHandler() {
+	HAL_TIM_IRQHandler(&Timhandle);
+}
+void I2C1_EV_IRQHandler() {
+	HAL_I2C_EV_IRQHandler(&I2CHandle);
+}
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	HAL_I2C_Master_Transmit_IT(&I2CHandle, 0b10010000, &command, 1);
+}
+void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c) {
+	HAL_I2C_Master_Receive_IT(&I2CHandle, 0b10010000, &temp, 1);
+	BSP_LED_Toggle(LED_GREEN);
 
+}
+void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c) {
+	BSP_LED_Toggle(LED_GREEN);
+}
 /**
   * @brief  Retargets the C library printf function to the USART.
   * @param  None
