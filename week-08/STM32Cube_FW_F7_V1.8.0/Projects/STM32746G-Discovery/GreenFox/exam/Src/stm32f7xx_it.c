@@ -55,11 +55,7 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
-extern I2C_HandleTypeDef I2CHandle;
-extern TIM_HandleTypeDef Timhandle;
-extern volatile uint8_t command;
-extern volatile uint8_t temp;
-extern volatile int data_ok;
+
 /******************************************************************************/
 /*            Cortex-M7 Processor Exceptions Handlers                         */
 /******************************************************************************/
@@ -69,23 +65,8 @@ extern volatile int data_ok;
   * @param  None
   * @retval None
   */
-void TIM2_IRQHandler() {
-	HAL_TIM_IRQHandler(&Timhandle);
-}
-void I2C1_EV_IRQHandler() {
-	HAL_I2C_EV_IRQHandler(&I2CHandle);
-}
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	BSP_LED_On(LED_GREEN);
-	HAL_I2C_Master_Transmit_IT(&I2CHandle, 0b10010000, &command, 1);
-}
-void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c) {
-	HAL_I2C_Master_Receive_IT(&I2CHandle, 0b10010000, &temp, 1);
-}
-void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c) {
-	data_ok = 1;
-	BSP_LED_Off(LED_GREEN);
-}
+
+
 void NMI_Handler(void)
 {
 }

@@ -60,13 +60,13 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 UART_HandleTypeDef UartHandle;
-RTC_HandleTypeDef RtcHandle;
-GPIO_InitTypeDef GPIOTxConfig;
-I2C_HandleTypeDef I2CHandle;
 TIM_HandleTypeDef Timhandle;
-volatile uint8_t command = 0;
-volatile uint8_t temp = 0;
-volatile int data_ok = 0;
+GPIO_InitTypeDef conf;
+volatile int blinks_leave = 0;
+volatile int faster_blink = 0;
+volatile int isopen = 1;
+volatile int ismoving = 0;
+volatile int report = 1;
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
@@ -76,16 +76,11 @@ static void CPU_CACHE_Enable(void);
 
 static void Peripherials_Config(void);
 static void UART_Config(void);
-static void RTC_Config(void);
-static void RTC_SetDateTime(uint8_t year, uint8_t month, uint8_t day, uint8_t weekday, uint8_t hour, uint8_t minute, uint8_t second);
-static void I2c_config(void);
 static void Timer_config();
+static void Button_config();
 
 void TIM2_IRQHandler();
-void I2C1_EV_IRQHandler();
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
-void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c);
-void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c);
 /* Private functions ---------------------------------------------------------*/
 
 /**
@@ -95,114 +90,81 @@ void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c);
  */
 int main(void) {
 	Timer_config();
-
-	I2c_config();
+	Peripherials_Config();
+	Button_config();
 	BSP_LED_Init(LED_GREEN);
-	HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
+	BSP_PB_Init(BUTTON_WAKEUP, BUTTON_MODE_GPIO);
+
 	HAL_NVIC_EnableIRQ(TIM2_IRQn);
+	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
-    Peripherials_Config();
-
-    RTC_SetDateTime(
-            17,                         // 2017
-            12,                         // december
-            12,                         // 12th
-            RTC_WEEKDAY_TUESDAY,        // tuesday
-            13,                         // hour: 13
-            11,                         // minute: 11
-            0                           // second: 0
-    );
-
-    /**
-     * Demo for sending date and time in every second
-     */
-    RTC_DateTypeDef dDate;
-    RTC_TimeTypeDef dTime;
+    printf("===Railroad crossing!===\r\n\n");
     while (1) {
-    	if (data_ok) {
-    		HAL_RTC_GetTime(&RtcHandle, &dTime, RTC_FORMAT_BIN);
-    		HAL_RTC_GetDate(&RtcHandle, &dDate, RTC_FORMAT_BIN);
-
-    		printf("%d.%d.%d. %d:%d:%d  %d\r\n", (dDate.Year + 2000), dDate.Month,
-                dDate.Date, dTime.Hours, dTime.Minutes, dTime.Seconds, temp);
-        	data_ok = 0;
+    	if (report) {
+    		if (isopen)
+    			printf("Entered in OPEN state\r\n");
+    		else
+    			printf("Entered in SECURED state\r\n");
+    		report = 0;
     	}
     }
 }
-static void I2c_config(void) {
-	__HAL_RCC_GPIOB_CLK_ENABLE();
-	__HAL_RCC_I2C1_CLK_ENABLE();
-
-	GPIOTxConfig.Mode = GPIO_MODE_AF_OD;
-	GPIOTxConfig.Alternate = GPIO_AF4_I2C1;
-	GPIOTxConfig.Pin = GPIO_PIN_8 | GPIO_PIN_9;
-	GPIOTxConfig.Speed = GPIO_SPEED_FAST;
-	GPIOTxConfig.Pull = GPIO_PULLUP;
-	HAL_GPIO_Init(GPIOB, &GPIOTxConfig);
-
-	I2CHandle.Instance = I2C1;
-	I2CHandle.Init.Timing = 0x40912732;
-	I2CHandle.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-	HAL_I2C_Init(&I2CHandle);
+void TIM2_IRQHandler() {
+	HAL_TIM_IRQHandler(&Timhandle);
+}
+void EXTI15_10_IRQHandler() {
+	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
+}
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	if (isopen && !ismoving) {
+		faster_blink = 10;
+		ismoving = 1;
+		printf("Entered in SECURING state\r\n");
+		isopen = 0;
+	} else if (!ismoving) {
+		faster_blink = 12;
+		ismoving = 1;
+		printf("Entered in OPENING state\r\n");
+		isopen = 1;
+	}
+}
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	if (faster_blink) {
+		faster_blink--;
+		BSP_LED_Toggle(LED_GREEN);
+	} else {
+		if (blinks_leave) {
+			blinks_leave = 0;
+		} else {
+			if (isopen)
+				BSP_LED_Toggle(LED_GREEN);
+			else
+				BSP_LED_Off(LED_GREEN);
+			blinks_leave = 1;
+			ismoving = 0;
+		}
+	}
+	if (faster_blink == 1)
+		report = 1;
 }
 static void Timer_config() {
 	__HAL_RCC_TIM2_CLK_ENABLE();
 
 	  Timhandle.Instance = TIM2;
 	  Timhandle.Init.Prescaler = 0xFFFF;
-	  Timhandle.Init.Period = 1646;
+	  Timhandle.Init.Period = 823;
 	  Timhandle.Init.CounterMode = TIM_COUNTERMODE_UP;
 	  Timhandle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	  HAL_TIM_Base_Init(&Timhandle);
 	  HAL_TIM_Base_Start_IT(&Timhandle);
 }
-
-/**
- * Configuring the RTC (real time clock) on the device, this setup results in correct time measurement,
- * so a second passes exactly under 1 second.
- *
- * Hint 1: the HAL_RTC_Init() calls the HAL_RTC_MspInit() function in stm32f7xx_hal_msp.c file. In that
- * function we configure the internal 32kHz oscillator and assign it to the RTC peripherial. Read
- * and understand that code!
- *
- * Hint 2: from the documentation it turns out that you need to adjust the AsynchPrediv and SynchPrediv
- * values to the oscillator to get exact time measurement (just like when you're configuring timers).
- * The current values guarantees to tick in every second:
- *
- * (AsynchPrediv+1)*(SynchPrediv+1) = 32000
- */
-static void RTC_Config(void) {
-    RtcHandle.Instance = RTC;
-    RtcHandle.Init.HourFormat = RTC_HOURFORMAT_24;
-    RtcHandle.Init.AsynchPrediv = 12;                  // 124 for 1 second
-    RtcHandle.Init.SynchPrediv = 25;                   // 255 for 1 second
-    RtcHandle.Init.OutPut = RTC_OUTPUT_DISABLE;
-    RtcHandle.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
-    RtcHandle.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
-    HAL_RTC_Init(&RtcHandle);
-}
-
-/**
- * This functions configures the RTC date and time to the values specified in the parameters.
- */
-static void RTC_SetDateTime(uint8_t year, uint8_t month, uint8_t day, uint8_t weekday,
-        uint8_t hour, uint8_t minute, uint8_t second) {
-    RTC_DateTypeDef sDate;
-    RTC_TimeTypeDef sTime;
-
-    sDate.Year = year;
-    sDate.Month = month;
-    sDate.Date = day;
-    sDate.WeekDay = weekday;
-    HAL_RTC_SetDate(&RtcHandle, &sDate, RTC_FORMAT_BIN);
-
-    sTime.Hours = hour;
-    sTime.Minutes = minute;
-    sTime.Seconds = second;
-    sTime.TimeFormat = RTC_HOURFORMAT_24;
-    sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-    sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-    HAL_RTC_SetTime(&RtcHandle, &sTime, RTC_FORMAT_BIN);
+static void Button_config() {
+	__HAL_RCC_GPIOI_CLK_ENABLE();
+	conf.Pin = GPIO_PIN_11;
+	conf.Pull = GPIO_NOPULL;
+	conf.Speed = GPIO_SPEED_FAST;
+	conf.Mode = GPIO_MODE_IT_RISING;
+	HAL_GPIO_Init(GPIOI, &conf);
 }
 
 static void Peripherials_Config(void) {
@@ -233,11 +195,6 @@ static void Peripherials_Config(void) {
      * Configure UART
      */
     UART_Config();
-
-    /*
-     * RTC init
-     */
-    RTC_Config();
 }
 
 static void UART_Config(void) {

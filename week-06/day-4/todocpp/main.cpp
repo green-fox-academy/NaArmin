@@ -22,7 +22,7 @@ int main()
                     cout << "Misspelled command!" << endl;
                 break;
             case 'l':
-                if (usercmd[2] == ' ')
+                if (usercmd[2] == 0)
                     todolst.listtasks();
                 else
                     cout << "Misspelled command!" << endl;
@@ -37,7 +37,7 @@ int main()
                 if (usercmd[2] == 0)
                     return 0;
                 else
-                    cout << "If you want to quit, dont type anything after 'q' please!" << endl;
+                    cout << "If you want to quit, don't type anything after 'q' please!" << endl;
                 break;
             default:
                 cout << "Invalid command!" << endl;

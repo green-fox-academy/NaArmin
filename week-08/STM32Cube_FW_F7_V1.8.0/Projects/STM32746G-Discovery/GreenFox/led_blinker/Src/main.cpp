@@ -129,7 +129,7 @@ int main(void)
 			  allledon();
 	  }
 
-	  HAL_Delay(160);
+	  HAL_Delay(120);
 	  allledoff();
 	  }
 

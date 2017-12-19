@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -12,17 +13,22 @@ void usageprint();
 
 int main()
 {
+    int portn;
     vector<string> ports = SerialPortWrapper::listAvailablePorts();
     cout << "Number of found serial ports: " << ports.size() << endl;
     for (unsigned int i = 0; i < ports.size(); i++) {
-        cout << "\tPort name: " << ports.at(i) << endl;
+        cout << "\t" << i + 1 << ".: Port name: " << ports.at(i) << endl;
     }
+    cout << "Select port number: ";
+    cin >> portn;
+    ofstream tlogfile("tempslog.txt");
+    ifstream tlogfile_in("tempslog.txt");
 
     // connection
 
-    SerialPortWrapper *serial = new SerialPortWrapper("COM19", 115200);
+    SerialPortWrapper *serial = new SerialPortWrapper(ports.at(portn - 1), 115200);
     string line;
-    FILE* fptr;
+    //FILE* fptr;
 
     vector<Temperature> loggedtemps;
     bool portopen = false;
@@ -80,27 +86,28 @@ int main()
             break;
         case 'r':
             char finput[30];
-            fptr = fopen("tempslog", "r");
-            if (!fptr) {
+            if (!tlogfile_in.is_open()) {
                 cout << "File not found!" << endl;
             } else {
                 loggedtemps.clear();
-                while (!feof(fptr)) {
-                    fgets(finput, 30, fptr);
+                while (!tlogfile_in.eof()) {
+                    tlogfile_in >> finput;
+                    if (tlogfile_in.fail())
+                        continue;
                     Temperature tf(finput);
                     loggedtemps.push_back(tf);
                 }
                 cout << "Data loaded." << endl;
             }
-            fclose(fptr);
+            tlogfile_in.close();
             break;
         case 'f':
-            fptr = fopen("tempslog", "w");
+
             for (unsigned int i = 0; i < loggedtemps.size(); ++i) {
-                fputs(loggedtemps[i].get(), fptr);
-                fputc('\n', fptr);
+                tlogfile << loggedtemps.at(i).get() << endl;
+                //fputc('\n', fptr);
             }
-            fclose(fptr);
+            tlogfile.close();
             break;
         case 'h':
             usageprint();

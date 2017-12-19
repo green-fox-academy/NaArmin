@@ -31,7 +31,7 @@ Temperature::Temperature(string inputstr)
 }
 void Temperature::setyear()
 {
-    if (year > 2017)
+    if (year > 2017) // TODO: extend condition
         isvalid = false;
     return;
 }

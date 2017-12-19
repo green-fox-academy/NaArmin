@@ -76,7 +76,7 @@ static void MPU_Config(void);
 static void CPU_CACHE_Enable(void);
 
 /* Private functions ---------------------------------------------------------*/
-void TIM_IRQHandler();
+void TIM2_IRQHandler();
 void I2C1_EV_IRQHandler();
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c);
@@ -113,7 +113,7 @@ int main(void)
 
   /* Add your application code here
      */
-  __HAL_RCC_TIM1_CLK_ENABLE();
+  __HAL_RCC_TIM2_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_I2C1_CLK_ENABLE();
@@ -121,16 +121,16 @@ int main(void)
   DISCOVERY_COMx_RX_GPIO_CLK_ENABLE(COM1);
   DISCOVERY_COMx_CLK_ENABLE(COM1);
 
-  Timhandle.Instance = TIM1;
+  Timhandle.Instance = TIM2;
   Timhandle.Init.Prescaler = 0xFFFF;
-  Timhandle.Init.Period = 3679;
+  Timhandle.Init.Period = 1647;
   Timhandle.Init.CounterMode = TIM_COUNTERMODE_UP;
   Timhandle.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   HAL_TIM_Base_MspInit(&Timhandle);
   HAL_TIM_Base_Init(&Timhandle);
   HAL_TIM_Base_Start_IT(&Timhandle);
 
-  GPIOTxConfig.Mode = GPIO_MODE_AF_OD;      //configure in pen drain mode
+  GPIOTxConfig.Mode = GPIO_MODE_AF_OD;
   GPIOTxConfig.Alternate = GPIO_AF4_I2C1;
   GPIOTxConfig.Pin = GPIO_PIN_8 | GPIO_PIN_9;
   GPIOTxConfig.Speed = GPIO_SPEED_FAST;
@@ -161,11 +161,8 @@ int main(void)
   uart_handle.Init.Mode       = UART_MODE_TX_RX;
   HAL_UART_Init(&uart_handle);
 
-  HAL_NVIC_SetPriority(I2C1_EV_IRQn, 0x0F, 0);
   HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
-  HAL_NVIC_SetPriority(TIM1_UP_TIM10_IRQn, 0x0E, 0);
-  HAL_NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
-  HAL_NVIC_SetPriority(SysTick_IRQn, 0x0E ,0);
+  HAL_NVIC_EnableIRQ(TIM2_IRQn);
 
   //BSP_COM_Init(COM1, &uart_handle);
   BSP_LED_Init(LED_GREEN);
@@ -188,22 +185,21 @@ int main(void)
 		  }
 	  }
 }
-void TIM_IRQHandler() {
+void TIM2_IRQHandler() {
 	HAL_TIM_IRQHandler(&Timhandle);
 }
 void I2C1_EV_IRQHandler() {
 	HAL_I2C_EV_IRQHandler(&I2CHandle);
 }
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	BSP_LED_On(LED_GREEN);
 	HAL_I2C_Master_Transmit_IT(&I2CHandle, 0b10010000, &command, 1);
 }
 void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c) {
 	HAL_I2C_Master_Receive_IT(&I2CHandle, 0b10010000, &temp, 1);
-	BSP_LED_Toggle(LED_GREEN);
-
 }
 void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c) {
-	BSP_LED_Toggle(LED_GREEN);
+	BSP_LED_Off(LED_GREEN);
 }
 /**
   * @brief  Retargets the C library printf function to the USART.
