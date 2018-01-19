@@ -2,7 +2,7 @@
 */EWARM
 *.txt
 */SW4STM32/*/*
-!*.cproject
-!*.project
+*.cproject
+*.project
 !*.ld
 !*.s
