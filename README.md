@@ -1,5 +1,8 @@
 # Final Exam links
 
+ Project contribution:
+  - Margin switch handling
+  - SD card
 # NaArmin
 
   - [git lesson repo](https://github.com/NaArmin/git-lesson-repository)
